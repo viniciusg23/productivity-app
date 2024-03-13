@@ -1,63 +1,91 @@
-import { Button, SafeAreaView, StyleSheet, View } from 'react-native';
-import { useState } from 'react';
-import HomePage from './src/pages/HomePage';
-import MetricsPage from './src/pages/MetricsPage';
-import SettingsPage from './src/pages/SettingsPage';
+import { Button, SafeAreaView, StyleSheet, Text } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
-interface IScreens {
-    home: React.JSX.Element;
-    metrics: React.JSX.Element;
-    settings: React.JSX.Element;
-}
+import { Application } from './src/backend/Application';
+import { openDatabase, enablePromise, SQLiteDatabase } from "react-native-sqlite-storage";
+import { readFile } from "react-native-fs";
 
-const screensConfig: IScreens = {
-    "home": <HomePage />,
-    "metrics": <MetricsPage />,
-    "settings": <SettingsPage />
-}
+
+
+import HomeScreen from './src/screens/HomeScreen';
+import MetricsScreen from './src/screens/MetricsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import { formatDate } from './src/utils/formatDate';
+import { useEffect } from 'react';
+
+
+const Tab = createBottomTabNavigator();
 
 function App() {
 
-    const [screen, setScreen] = useState<keyof IScreens>("home");
+    useEffect(() => {
+        enablePromise(true);
 
-    const onHandleScreen = (screen: keyof IScreens) => {
-        setScreen(screen);
-    }
+        async function runApplication(){
+            try {
+                Application.db = await openDatabase({ name: "database.db", location: "default" });
+                const query = await readFile("./src/backend/setup.sql", "utf8");
+
+                await Application.db.transaction(async (tx) => {
+                    await tx.executeSql(query);
+                });
+
+            } catch (error) {
+                console.error("Error:\n", error);
+            }
+        }
+
+        runApplication();
+    }, [])
 
     return (
-        <SafeAreaView style={styles.container}>
+        <NavigationContainer>
+            <Tab.Navigator
+                initialRouteName="Home"
+                screenOptions={{
+                    tabBarAllowFontScaling: true,
+                    tabBarLabelStyle: {fontSize: 12},
+                    tabBarStyle: {height: 85},
+                }}
+            >
+                <Tab.Screen
+                    name="Home"
+                    component={HomeScreen}
+                    options={{
+                        tabBarIcon: ({color, size}) => (
+                            <Ionicons name="list" size={size + 4} color={color} />
+                        ),
+                        headerTitle: formatDate(new Date())
+                    }}
+                />
+                <Tab.Screen
+                    name="Metrics"
+                    component={MetricsScreen}
+                    options={{
+                        tabBarIcon: ({color, size}) => (
+                            <Ionicons name="analytics-outline" size={size + 4} color={color}/>
+                        )
+                    }}
+                />
+                <Tab.Screen
+                    name="Settings"
+                    component={SettingsScreen}
+                    options={{
+                        tabBarIcon: ({color, size}) => (
+                            <Ionicons name="settings-outline" size={size + 4} color={color} />
+                        )
+                    }}
+                />
+            </Tab.Navigator>
+        </NavigationContainer>
 
-            
-
-            {screen && (
-                screensConfig[screen]
-            )}
-
-            <View style={styles.screenControl}>
-                <Button title="Home" onPress={() => onHandleScreen("home")} />
-                <Button title="Metrics" onPress={() => onHandleScreen("metrics")} />
-                <Button title="Settings" onPress={() => onHandleScreen("settings")} />
-            </View>
-        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    screenControl: {
-        position: "absolute",
-        bottom: "0%",
-        width: "100%",
-        backgroundColor: "#eeeeee",
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-around",
-        padding: 10,
-        paddingBottom: 35
-    }
+
 });
 
 export default App;

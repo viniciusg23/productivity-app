@@ -1,11 +1,11 @@
 import { Text, View } from "react-native";
 
-function MetricsPage() {
+function SettingsScreen() {
     return (
         <View>
-            <Text>Metrics</Text>
+            <Text>Settings</Text>
         </View>
     );
 }
 
-export default MetricsPage;
+export default SettingsScreen;
