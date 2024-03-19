@@ -1,10 +1,9 @@
 import { Text } from "react-native";
 
-function MetricsScreen(){
-    return(
+function MetricsScreen() {
+    return (
         <Text>Metrics Screen</Text>
     );
 }
-
 
 export default MetricsScreen;
